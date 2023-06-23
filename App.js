@@ -6,22 +6,27 @@ import * as Location from 'expo-location';
 export default function App() {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
- 
-  
+  const [userLocation, setUserLocation] = useState(null);
   useEffect(() => {
     (async () => {
-      
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted' && status !== 'granted') {
         setErrorMsg('Permission to access location was denied');
         return;
       }
-
+  
       let location = await Location.getCurrentPositionAsync({});
       setLocation(location);
+  
+      // Збережіть координати користувача в стані `userLocation`
+      setUserLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
     })();
   }, []);
-
+  
+ 
   let text = 'Waiting..';
   if (errorMsg) {
     text = errorMsg;
@@ -42,9 +47,18 @@ export default function App() {
       latitudeDelta: 0.015,
       longitudeDelta: 0.0121,
     }}
-    
+    >
+       {userLocation && (
+    <Marker
+      coordinate={{
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+      }}
+      title={"Moja pozycja"}
+    />
+  )}
       
-      >
+      
        <Marker
     coordinate={{
       latitude:49.7803014086921, 
