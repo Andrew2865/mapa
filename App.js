@@ -1,8 +1,8 @@
 import React,{useState,useEffect} from 'react';
-import MapView,{Marker} from 'react-native-maps';
-import { StyleSheet, View } from 'react-native';
+import MapView,{Marker,Polyline,Circle} from 'react-native-maps';
+import { StyleSheet, View,Image,Text,TouchableWithoutFeedback, Dimensions } from 'react-native';
 import * as Location from 'expo-location';
-
+import LocationBar from './locationBAr';
 export default function App() {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -34,10 +34,17 @@ export default function App() {
     text = JSON.stringify(location);
   }
   
+   
   
   return (
+
+    
     <View style={styles.container}>
-     
+      <LocationBar 
+                  latitude={userLocation?.latitude}
+                  longitude={userLocation?.longitude}
+              />
+
       <MapView 
       style={styles.map} 
      region={{
@@ -48,25 +55,24 @@ export default function App() {
       longitudeDelta: 0.0121,
     }}
     >
-       {userLocation && (
-    <Marker
-      coordinate={{
-        latitude: userLocation.latitude,
-        longitude: userLocation.longitude,
-      }}
-      title={"Moja pozycja"}
-    />
-  )}
-      
-      
-       <Marker
-    coordinate={{
-      latitude:49.7803014086921, 
-      longitude: 22.76600752434019 ,
-    }}
-    title={"Miś Generał"}
-    />
-
+    {userLocation && (
+          <Marker
+            coordinate={{
+              latitude: userLocation.latitude,
+              longitude: userLocation.longitude,
+            }}
+            title={"Moja pozycja"}
+            image={require('./assets/elipsa.png')}
+          />
+        )} 
+      <Marker
+          coordinate={{
+            latitude: 49.7803014086921,
+            longitude: 22.76600752434019,
+          }}
+          title={"Miś Generał"}
+          image={require("./assets/miś1.png")}
+        />
 <Marker
     coordinate={{
       latitude:49.78591891571912, 
@@ -153,6 +159,15 @@ longitude: 22.76808612902565 ,
 title={"Miś z pizzą"}
 />
 
+<Circle
+        center={{
+          latitude: userLocation ? userLocation.latitude : 0,
+          longitude: userLocation ? userLocation.longitude : 0,
+        }}
+        radius={20} // Радіус у метрах
+        strokeColor={"rgba(0, 0, 255, 0.5)"} // Колір обводки кола
+        fillColor={"rgba(0, 0, 255, 0.2)"} // Колір заповнення кола
+      />
 
         </MapView>
         
@@ -173,4 +188,5 @@ const styles = StyleSheet.create({
   },
  
  });
+
  
