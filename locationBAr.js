@@ -1,48 +1,48 @@
 import { View, Image, StyleSheet, Text, Dimensions } from "react-native";
 import { SIZES } from "./constants";
 import * as Location from 'expo-location';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const time = 'now'
+const time = 'now';
 const ScreenHeight = Dimensions.get('screen').height;
 
-
 const LocationBar = ({ latitude, longitude }) => {
-    const [userAddres, setUserAdress] = useState('Street');
-    const reverseGeocode = async () => {
-        try {
-            const reversedGeocodeAddress = await Location.reverseGeocodeAsync({
-              latitude,
-              longitude,
-            });     
-            if (reversedGeocodeAddress.length > 0) {
-              const { street, streetNumber } = reversedGeocodeAddress[0];
-              const formattedAddress = `${street? street : 'Not located at the street'} ${streetNumber? streetNumber : ''}`;
-              console.log('User now at:', formattedAddress);
-              setUserAdress(formattedAddress);
+    const [userAddress, setUserAddress] = useState('Street');
+
+    useEffect(() => {
+        const reverseGeocode = async () => {
+            try {
+                const reversedGeocodeAddress = await Location.reverseGeocodeAsync({
+                    latitude,
+                    longitude,
+                });     
+                if (reversedGeocodeAddress.length > 0) {
+                    const { street, streetNumber } = reversedGeocodeAddress[0];
+                    const formattedAddress = `${street ? street : 'Not located at the street'} ${streetNumber ? streetNumber : ''}`;
+                    console.log('User now at:', formattedAddress);
+                    setUserAddress(formattedAddress);
+                }
+            } catch (error) {
+                console.log('Reverse geocoding error:', error);
             }
-          } catch (error) {
-            console.log('Reverse geocoding error:', error);
-          }
-        
-          return '';
-    }
-    reverseGeocode(latitude, longitude);
+        }
+
+        reverseGeocode();
+    }, [latitude, longitude]);
     
-    return(
+    return (
         <View style={styles.main}>
             <Image
-                style = {styles.locationIcon}
-                source = {require("./assets/icon.png")}
-                
+                style={styles.locationIcon}
+                source={require("./assets/icon.png")}
             />
-            <View style = {styles.textBlock} >
-                <Text style={styles.locationText}>{userAddres}</Text>
-                <Text style={styles.statusText}>{'Update - ' + time }</Text>
+            <View style={styles.textBlock}>
+                <Text style={styles.locationText}>{userAddress}</Text>
+                <Text style={styles.statusText}>{'Update - ' + time}</Text>
             </View>
         </View>
-    )
-} 
+    );
+};
 
 export default LocationBar;
 
@@ -67,10 +67,6 @@ const styles = StyleSheet.create({
 
     textBlock: {
         flexDirection: 'column',
-        height: ScreenHeight *0.075
+        height: ScreenHeight * 0.075
     },
-
-    
-
-    
 });
