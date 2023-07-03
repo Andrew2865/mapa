@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import MapView, { Marker, Circle } from 'react-native-maps';
+import MapView, { Marker, Circle, Polyline } from 'react-native-maps';
 import { StyleSheet, View, Image, TouchableOpacity, Text } from 'react-native';
 import * as Location from 'expo-location';
-import { Directions } from 'react-native-maps-directions';
 
 export default function App() {
+  const [polylineCoordinates, setPolylineCoordinates] = useState([]);
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
@@ -22,42 +22,23 @@ export default function App() {
     { id: 10, latitude: 49.783900434378204, longitude: 22.77194183091356, title: 'Miś z okularem' },
     { id: 11, latitude: 49.78243022558096, longitude: 22.771306713491533, title: 'Miś z perfumami' },
     { id: 12, latitude: 49.78306141028644, longitude: 22.76808612902565, title: 'Miś z pizzą' },
-    // Додайте більше об'єктів маркерів за необхідністю
   ]);
 
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [route, setRoute] = useState(null);
+  const [mapRegion, setMapRegion] = useState(null);
 
   const handleGeolocationButtonPress = () => {
     setGeolocationEnabled(true);
   };
 
-  const handleRouteButtonPress = () => {
-    if (selectedMarker && userLocation) {
-      const origin = `${userLocation.latitude},${userLocation.longitude}`;
-      const destination = `${selectedMarker.latitude},${selectedMarker.longitude}`;
-      const API_KEY = 'YOUR_GOOGLE_MAPS_API_KEY'; // Замініть на свій ключ Google Maps API
-
-      const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&key=${API_KEY}`;
-
-      fetch(url)
-        .then(response => response.json())
-        .then(data => {
-          if (data.status === 'OK' && data.routes.length > 0) {
-            const routeData = data.routes[0];
-            const routePoints = decodePolyline(routeData.overview_polyline.points);
-            setRoute(routePoints);
-          } else {
-            console.log('No route found');
-          }
-        })
-        .catch(error => {
-          console.log('Error:', error);
-        });
-    }
+  const handleRouteButtonPress = () => { //route from marker to marker
+    const coordinates = markers.map(marker => ({
+      latitude: marker.latitude,
+      longitude: marker.longitude,
+    }));
+    setPolylineCoordinates(coordinates);
   };
-
-  const [address, setAddress] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -70,73 +51,36 @@ export default function App() {
       let location = await Location.getCurrentPositionAsync({});
       setLocation(location);
 
-      // Збережіть координати користувача в стані `userLocation`
       const userLocationData = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
+        latitude: location.coords.latitude || 0,
+        longitude: location.coords.longitude || 0,
       };
       setUserLocation(userLocationData);
+      const region = {
+        latitude: userLocationData.latitude,
+        longitude: userLocationData.longitude,
+        latitudeDelta: 0.015,
+        longitudeDelta: 0.0121,
+      };
+      setMapRegion(region);
     })();
   }, []);
-
-  const decodePolyline = polyline => {
-    const points = [];
-    let index = 0,
-      len = polyline.length;
-    let lat = 0,
-      lng = 0;
-
-    while (index < len) {
-      let b,
-        shift = 0,
-        result = 0;
-
-      do {
-        b = polyline.charCodeAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-
-      let dlat = (result & 1) !== 0 ? ~(result >> 1) : result >> 1;
-      lat += dlat;
-
-      shift = 0;
-      result = 0;
-
-      do {
-        b = polyline.charCodeAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-
-      let dlng = (result & 1) !== 0 ? ~(result >> 1) : result >> 1;
-      lng += dlng;
-
-      points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
-    }
-
-    return points;
-  };
 
   return (
     <View style={styles.container}>
       <View style={styles.locationBar}>
         <Text style={styles.locationText}>
-          Latitude: {userLocation?.latitude}
+          Latitude: {userLocation?.latitude || ''}
         </Text>
         <Text style={styles.locationText}>
-          Longitude: {userLocation?.longitude}
+          Longitude: {userLocation?.longitude || ''}
         </Text>
       </View>
 
       <MapView
         style={styles.map}
-        region={{
-          latitude: 49.78227100453792,
-          longitude: 22.77424858187272,
-          latitudeDelta: 0.015,
-          longitudeDelta: 0.0121,
-        }}
+        region={mapRegion}
+        provider={MapView.PROVIDER_DEFAULT}
       >
         {userLocation && (
           <Marker
@@ -164,15 +108,15 @@ export default function App() {
               latitude: userLocation.latitude,
               longitude: userLocation.longitude,
             }}
-            radius={40} // Radius in meters
+            radius={50} // Radius in meters
             strokeColor={'rgba(0, 0, 255, 0.5)'} // Circle stroke color
             fillColor={'rgba(0, 255, 0, 0.3)'} // Circle fill color
           />
         )}
 
-        {route && (
-          <MapView.Polyline
-            coordinates={route}
+        {polylineCoordinates.length > 0 && (
+          <Polyline
+            coordinates={polylineCoordinates}
             strokeWidth={3}
             strokeColor="red"
           />
@@ -209,45 +153,42 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
-  locationBar: {
-    position: 'absolute',
-    top: 20,
-    left: 10,
-    backgroundColor: 'white',
-    padding: 8,
-    borderRadius: 8,
-    elevation: 2,
-  },
-  locationText: {
-    fontSize: 16,
-  },
   map: {
-    ...StyleSheet.absoluteFillObject,
+    width:400,
+    height:790,
   },
   geolocationButton: {
     position: 'absolute',
-    bottom: 120,
-    right: 10,
-    backgroundColor: '#f0f0f0',
-    padding: 8,
-    borderRadius: 10,
-    elevation: 1,
+    top: 20,
+    right: 20,
+    zIndex: 1,
   },
   geolocationButtonImage: {
-    width: 45,
+    width: 40,
     height: 40,
   },
   routeButton: {
     position: 'absolute',
     bottom: 60,
-    right: 10,
-    backgroundColor: '#f0f0f0',
-    padding: 8,
-    borderRadius: 8,
-    elevation: 2,
+    right: 20,
+    zIndex: 1,
   },
   routeButtonImage: {
-    width:45 ,
+    width: 40,
     height: 40,
   },
+  locationBar: {
+    position: 'absolute',
+    bottom: 60,
+    left: 20,
+    zIndex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 5,
+    padding: 10,
+  },
+  locationText: {
+    fontSize: 14,
+    marginBottom: 5,
+  },
+
 });
