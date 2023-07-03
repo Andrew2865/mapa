@@ -11,7 +11,7 @@ export default function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [geolocationEnabled, setGeolocationEnabled] = useState(false);
   const [markers, setMarkers] = useState([
-    { id: 1, latitude: 49.7803014086921, longitude: 22.76600752434019, title: 'Miś Generał', image: require('./assets/mis.png') },
+    { id: 1, latitude: 49.7803014086921, longitude: 22.76600752434019, title: 'Miś Generał' },
     { id: 2, latitude: 49.78591891571912, longitude: 22.76611810224204, title: 'Miś hydraulik' },
     { id: 3, latitude: 49.78370479629267, longitude: 22.76692201994785, title: 'Miś informatyk' },
     { id: 4, latitude: 49.78306627681199, longitude: 22.77682148980239, title: 'Miś kierowca autobusu' },
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   map: {
     position: 'absolute',
-    top: 40,
+    top: 45,
     bottom: 70,
     left: 0,
     right: 0,
